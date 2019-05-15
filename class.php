@@ -58,7 +58,7 @@
       return $prenotazioni;
     }
   }
-  
+
   class Stanza {
 
     private $id;
@@ -172,6 +172,57 @@
         }
     }
 
+  class Pagamento {
+
+    private $id;
+    private $status;
+    private $price;
+    private $prenotazione_id;
+    private $pagante_id;
+
+    function __construct($id,$status,$price,$prenotazione_id,$pagante_id){
+
+      $this->id=$id;
+      $this->status=$status;
+      $this->price=$price;
+      $this->prenotazione_id=$prenotazione_id;
+      $this->pagante_id=$pagante_id;
+    }
+
+    function getPagamentoId(){
+
+      return $this->id;
+    }
+
+    public static function getPagamentoByPrenotazioni($conn, $id_pren) {
+
+      $sql = "
+
+        SELECT *
+        FROM pagamenti
+        WHERE prenotazione_id = $id_pren
+
+      ";
+
+      $result = $conn->query($sql);
+
+      // var_dump($sql); die();
+
+      if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $pagamento = new Pagamento(
+                      $row["id"],
+                      $row["status"],
+                      $row["price"],
+                      $row["prenotazione_id"],
+                      $row["pagante_id"]);
+
+        return $pagamento;
+      }
+    }
+  }
+
+
   $conn = new mysqli($servername, $username, $password, $dbname);
 
   if ($conn->connect_errno) {
@@ -192,9 +243,13 @@
     $configurazione_id = $prenotazione->getConfigurazioneId();
     $configurazione = Configurazione::getConfigurazioneById($conn,$configurazione_id);
 
+    $id_pren=$prenotazione->getId();
+    $pagamento = Pagamento::getPagamentoByPrenotazioni($conn,$id_pren);
+
     echo "prenotazione id: " . $prenotazione->getId() . "<br>" .
           "-Stanza: " . $stanza->getStanzAId() . " ; number: " . $stanza->getRoomNumber() . " ; floor: " . $stanza->getFloor() .  " ; Beds: " . $stanza->getBeds() . "<br>" .
-          "-Configurazione: " . $prenotazione->getConfigurazioneId() . " ; " . $configurazione->getTitle() . " ; " . $configurazione->getDesc() .
+          "-Configurazione: " . $prenotazione->getConfigurazioneId() . " ; " . $configurazione->getTitle() . " ; " . $configurazione->getDesc() . "<br>" .
+          "-Pagamento: " . $pagamento->getPagamentoId() .
           "<br><br>";
   }
 
